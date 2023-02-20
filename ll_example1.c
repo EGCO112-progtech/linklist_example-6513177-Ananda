@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct Node
 {
-    int value;
+    int id;
+    char name[50];
     struct Node *next;
     struct Node *prev;
 };
@@ -17,39 +19,38 @@ int isEmpty ( node *head )
 
 node *printList ( node *head )
 {
-    if (isEmpty( head )) printf("List is empty\n");
-    else 
-    {
-        printf("The list is");
-        node *tmp = head;
+   if ( isEmpty( head ) ) {
+      puts( "List is empty.\n" );
+   } // end if
+   else {
+      puts( "\nThe list is:" );
 
-        while (tmp != NULL)
-        {
-            printf("%d --> NULL\n", tmp->value);
-            tmp = tmp->next;
-        }
-    }
+      while ( head->next!= NULL ) {
+         printf( "id: %d\nUsername: %s \n##########\n", head->id, head->name );
+         head = head->next;  
+      }
+
+      printf( "id: %d\nUsername: %s\n",head->id, head->name );
+       
+   }
 }
 
 node *printReverseList ( node *head )
 {
-    if (isEmpty( head )) printf("List is empty\n");
-    else 
-    {
-        printf("The list is");
-        node *tmp = head;
-
-        while (tmp->next != NULL)
-        {
-            tmp = tmp->next;
-        }
-
-        while (tmp->prev != NULL)
-        {
-            printf("%d --> NULL\n", tmp->value);
-            tmp = tmp->prev;
-        }
-    }
+   if ( isEmpty( head ) ) {
+      puts( "List is empty.\n" );
+   }
+   else {
+      puts( "\nThe Reversed list is:" );
+      while ( head->next!= NULL ) {
+         head = head->next;  
+      }
+      while ( head->prev!= NULL ) {
+         printf( "id: %d\nUsername: %s \n##########\n", head->id, head->name );
+         head = head->prev;  
+      }
+      printf( "id: %d\nUsername: %s\n",head->id, head->name );
+   }
 }
 
 void instructions()
@@ -60,61 +61,66 @@ void instructions()
       "   3 to end." );
 }
 
-node *createNode ( int value )
+node *createNode ( int id, char *name )
 {
     node *result = malloc(sizeof(node));
-    result->value = value;
-    result->next = NULL; 
+    result->id = id;
+    // result->name = malloc(strlen(name) + 1);
+    strcpy(result->name, name);
+    result->next = NULL;
     result->prev = NULL;
-    return result; 
+    return result;
 }
 
-node *insert (node *node_to_insert_after, node* new_node)
+void insert (node **head, node* new_node)
 {
-    new_node->next = node_to_insert_after->next;
-    node_to_insert_after->next->prev = new_node;
-    new_node->prev = node_to_insert_after;
-    node_to_insert_after->next = new_node;
+    node *tmp;
+
+    if (*head == NULL) *head = new_node;
+    else if ((*head)->id > new_node->id)
+    {
+        new_node->next = *head;
+        new_node->next->prev = new_node;
+        *head = new_node;
+    }
+    else 
+    {
+        tmp = *head;
+        while (tmp->next != NULL && tmp->next->id < new_node->id) tmp = tmp->next;
+
+        new_node->next = tmp->next;
+        tmp->next = new_node;
+        new_node->prev = tmp;
+        if( new_node->next != NULL ) new_node->next->prev = new_node;
+    }
 }
 
-node *removeNode ( node **head, node *node_to_remove)
+void removeNode ( node **head, node *node_to_remove)
 {
     if(*head == node_to_remove)
     {
         node *tmp = *head;
-        *head = node_to_remove->next;
+        *head = (*head)->next;
+        if ((*head) != NULL) (*head)->prev = NULL;
         free(tmp);
+        return;
     }
     else
     {
-        node *tmp = *head;
-        
-        while (tmp != NULL && tmp->next != node_to_remove)
-        {
-            tmp->next;
-        }
-        // if (tmp == NULL) return;
-        tmp->next = node_to_remove->next;
-        tmp->next->prev = node_to_remove->prev;
-        node_to_remove->next = NULL;
-        free(node_to_remove);
+        node *tmp = node_to_remove;
+        node_to_remove->prev->next = node_to_remove->next;
+        if(node_to_remove->next != NULL) node_to_remove->next->prev = node_to_remove->prev;
+        free(tmp);
     }
+    return;
 }
 
-node *insert_node_at_head ( node **head, node *node_to_insert)
-{
-    node_to_insert->next = *head;
-    (*head)->prev = node_to_insert;
-    *head = node_to_insert;
-    return node_to_insert; 
-}
-
-node *findNode ( node *head, int value)
+node *findNode ( node *head, int id)
 {
     node *tmp = head;
     while (tmp != NULL)
     {
-        if (tmp->value == value) return tmp;
+        if (tmp->id == id) return tmp;
         tmp = tmp->next;
     }
     return NULL;
@@ -126,31 +132,33 @@ int main (void)
 
     unsigned int choice;
     int item;
+    char name[50];
 
     instructions();
     printf( "%s", "? " );
     scanf( "%u", &choice );
-    int counter = 0;
-    while ( choice != 3 ) { 
-        counter++;
-        switch ( choice ) { 
+    while ( choice != 3 ) {
+        switch ( choice ) {
             case 1:
-            printf( "%s", "Enter a number: " );
+            printf( "%s", "Enter a ID: " );
             scanf( "%d", &item );
-            if (counter == 1) insert_node_at_head( &head, createNode(item));
-            else insert( head, createNode(item) ); // insert item in list
+            printf( "%s", "Enter a Name: " );
+            scanf( " %s", name );
+            insert( &head , createNode(item, name) );
             printList( head );
             printReverseList( head );
             break;
             case 2: // delete an element
             // if list is not empty
-            if ( !isEmpty( head ) ) { 
+            if ( !isEmpty( head ) ) {
                 printf( "%s", "Enter number to be deleted: " );
                 scanf( "%d", &item );
-                // if character is found, remove it
-                if ( removeNode( &head, createNode(item))) { // remove item
+                if ( findNode(head, item) ) 
+                { 
+                    removeNode( &head, findNode(head, item));
                     printf( "%d deleted.\n", item );
                     printList( head );
+                    printReverseList( head );
                 } // end if
                 else {
                     printf( "%d not found.\n\n", item );
